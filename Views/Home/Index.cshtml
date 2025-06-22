@@ -1,0 +1,109 @@
+﻿@{
+    ViewData["Title"] = "Nuclear War Simulation";
+}
+
+<div class="hero-section bg-dark text-white text-center py-5 mb-5">
+    <div class="container">
+        <h1 class="display-3 mb-4">☢️ Nuclear War Simulation</h1>
+        <p class="lead mb-4">
+            An educational simulation to understand the devastating effects of nuclear weapons on urban populations.
+        </p>
+        <div class="alert alert-warning mx-auto" style="max-width: 800px;">
+            <h5>⚠️ Important Disclaimer</h5>
+            <p class="mb-0">
+                This simulation is for educational purposes only. It aims to promote awareness about the catastrophic 
+                consequences of nuclear warfare and the importance of nuclear disarmament and peace.
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="card-title mb-0">🎯 Start Nuclear Impact Simulation</h3>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        This simulation calculates the effects of nuclear weapons including:
+                    </p>
+                    <ul class="list-unstyled">
+                        <li>🔥 <strong>Fireball and thermal radiation</strong> - Immediate incineration zone</li>
+                        <li>☢️ <strong>Nuclear radiation</strong> - Lethal radiation exposure area</li>
+                        <li>💥 <strong>Air blast</strong> - Structural damage from overpressure</li>
+                        <li>🌊 <strong>Fallout patterns</strong> - Long-term radioactive contamination</li>
+                        <li>👥 <strong>Casualty estimates</strong> - Based on population density</li>
+                    </ul>
+                    
+                    <div class="text-center mt-4">
+                        <a href="@Url.Action("Index", "Simulation")" class="btn btn-danger btn-lg">
+                            🚀 Begin Simulation
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">📚 Educational Purpose</h5>
+                    <p class="card-text">
+                        Understanding the science behind nuclear weapons helps promote informed discussions about nuclear policy and disarmament.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">🔬 Scientific Accuracy</h5>
+                    <p class="card-text">
+                        Our calculations are based on declassified scientific data and the "Effects of Nuclear Weapons" handbook.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">🕊️ Peace Advocacy</h5>
+                    <p class="card-text">
+                        By understanding the consequences, we hope to contribute to efforts toward nuclear disarmament and world peace.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        border-bottom: 3px solid #dc3545;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        border-radius: 25px;
+        padding: 12px 30px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    }
+</style>

@@ -1,0 +1,238 @@
+@model NuclearWarSimulation.Models.SimulationModel
+
+@{
+    ViewData["Title"] = "Nuclear Impact Simulation";
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">🎯 Nuclear Impact Simulation</h1>
+            
+            <div class="alert alert-danger">
+                <h5>⚠️ Warning</h5>
+                <p class="mb-0">
+                    This simulation shows realistic estimates of nuclear weapon effects. 
+                    The results may be disturbing and are intended for educational purposes only.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Map Container -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🗺️ Target Selection Map</h5>
+                </div>
+                <div class="card-body">
+                    <div id="map" style="height: 400px; width: 100%;"></div>
+                    <small class="text-muted mt-2 d-block">
+                        Click on the map to select a target location, or choose from the city dropdown below.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Simulation Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">⚙️ Simulation Parameters</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="RunSimulation" method="post">
+                        <div class="mb-3">
+                            <label asp-for="TargetCity" class="form-label">Target City</label>
+                            <select asp-for="TargetCity" class="form-select" id="citySelect">
+                                <option value="">Select a city or click on map</option>                                @if (ViewBag.Cities != null)
+                                {
+                                    @foreach (var city in ViewBag.Cities as List<NuclearWarSimulation.Models.City>)
+                                    {
+                                        <option value="@city.Name" data-lat="@city.Latitude" data-lng="@city.Longitude" data-density="@city.PopulationDensity">
+                                            @city.Name, @city.Country
+                                        </option>
+                                    }
+                                }
+                            </select>
+                            <span asp-validation-for="TargetCity" class="text-danger"></span>
+                        </div>                        <div class="mb-3">
+                            <label asp-for="BombYield" class="form-label">Bomb Yield (Kilotons)</label>
+                            <input asp-for="BombYield" type="number" class="form-control" step="0.1" min="0.1" max="100000" value="15" required>
+                            <div class="form-text">
+                                <small>Examples: Hiroshima = 15kt, Modern warhead = 100-475kt, Largest ever = 50,000kt</small>
+                            </div>
+                            <span asp-validation-for="BombYield" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="DetonationType" class="form-label">Detonation Type</label>
+                            <select asp-for="DetonationType" class="form-select" required>
+                                <option value="AirBurst">Air Burst (Maximum blast damage)</option>
+                                <option value="SurfaceBurst">Surface Burst (Maximum fallout)</option>
+                            </select>
+                            <span asp-validation-for="DetonationType" class="text-danger"></span>
+                        </div>
+
+                        <input asp-for="Latitude" type="hidden" id="latitude" value="40.7128">
+                        <input asp-for="Longitude" type="hidden" id="longitude" value="-74.0060">
+                        <input asp-for="PopulationDensity" type="hidden" id="populationDensity" value="11313">                        <div class="mb-3">
+                            <label class="form-label">Population Density (per km²)</label>
+                            <input type="number" class="form-control" id="populationDensityDisplay" readonly value="11313">
+                            <div class="form-text">
+                                <small>Automatically filled based on city selection</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Target Coordinates</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" class="form-control" id="latitudeDisplay" placeholder="Latitude" readonly value="40.7128">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control" id="longitudeDisplay" placeholder="Longitude" readonly value="-74.0060">
+                                </div>
+                            </div>
+                            <div class="form-text">
+                                <small>Select a city or click on the map</small>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                💥 Run Simulation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize map
+    var map = L.map('map').setView([40.7128, -74.0060], 2);
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    var marker;
+      // Handle map clicks
+    map.on('click', function(e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+        
+        // Remove existing marker
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        
+        // Add new marker
+        marker = L.marker([lat, lng]).addTo(map);
+        
+        // Update form fields
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        document.getElementById('latitudeDisplay').value = lat.toFixed(4);
+        document.getElementById('longitudeDisplay').value = lng.toFixed(4);
+        document.getElementById('TargetCity').value = `Custom Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
+        document.getElementById('populationDensity').value = 1000; // Default density
+        document.getElementById('populationDensityDisplay').value = 1000;
+    });
+    
+    // Handle city selection
+    document.getElementById('citySelect').addEventListener('change', function() {
+        var option = this.options[this.selectedIndex];
+        if (option.value) {
+            var lat = parseFloat(option.dataset.lat);
+            var lng = parseFloat(option.dataset.lng);
+            var density = parseInt(option.dataset.density);
+            
+            // Update map
+            map.setView([lat, lng], 10);
+            
+            // Remove existing marker
+            if (marker) {
+                map.removeLayer(marker);
+            }
+            
+            // Add new marker
+            marker = L.marker([lat, lng]).addTo(map);
+            
+            // Update form fields
+            document.getElementById('latitude').value = lat;
+            document.getElementById('longitude').value = lng;
+            document.getElementById('latitudeDisplay').value = lat.toFixed(4);
+            document.getElementById('longitudeDisplay').value = lng.toFixed(4);
+            document.getElementById('populationDensity').value = density;
+            document.getElementById('populationDensityDisplay').value = density;
+        }
+    });
+    
+    // Initialize with New York as default
+    var initialLat = 40.7128;
+    var initialLng = -74.0060;
+    marker = L.marker([initialLat, initialLng]).addTo(map);
+    document.getElementById('TargetCity').value = 'New York';
+    
+    // Add form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        var lat = document.getElementById('latitude').value;
+        var lng = document.getElementById('longitude').value;
+        var yield = document.getElementById('BombYield').value;
+        
+        if (!lat || !lng) {
+            e.preventDefault();
+            alert('Please select a target location on the map or from the city dropdown.');
+            return false;
+        }
+        
+        if (!yield || yield < 0.1 || yield > 100000) {
+            e.preventDefault();
+            alert('Please enter a valid bomb yield between 0.1 and 100,000 kilotons.');
+            return false;
+        }
+        
+        console.log('Submitting simulation with:', {
+            city: document.getElementById('TargetCity').value,
+            lat: lat,
+            lng: lng,
+            yield: yield,
+            density: document.getElementById('populationDensity').value
+        });
+    });
+});
+</script>
+
+<style>
+    .leaflet-container {
+        border-radius: 8px;
+    }
+    
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        font-weight: bold;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        font-weight: bold;
+    }
+</style>

@@ -1,0 +1,372 @@
+@model NuclearWarSimulation.Models.SimulationResult
+
+@{
+    ViewData["Title"] = "Simulation Results";
+}
+
+<!-- Debug information (remove in production) -->
+<div style="display: none;" id="debug-info">
+    <p>Latitude: @Model.Latitude</p>
+    <p>Longitude: @Model.Longitude</p>
+    <p>Fireball Radius: @Model.FireballRadius</p>
+    <p>Radiation Radius: @Model.RadiationRadius</p>
+    <p>Air Blast Radius: @Model.AirBlastRadius</p>
+    <p>Thermal Radiation Radius: @Model.ThermalRadiationRadius</p>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">☢️ Nuclear Impact Simulation Results</h1>
+            
+            <div class="alert alert-danger">
+                <h5>⚠️ Simulation Results</h5>
+                <p class="mb-0">
+                    <strong>Target:</strong> @Model.TargetCity<br>
+                    <strong>Weapon Yield:</strong> @Model.BombYield.ToString("N1") kilotons<br>
+                    <strong>Detonation Type:</strong> @Model.DetonationType.ToString().Replace("Burst", " Burst")<br>
+                    <strong>Simulated on:</strong> @Model.SimulationDate.ToString("yyyy-MM-dd HH:mm")
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Results Map -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">🗺️ Impact Zones Visualization</h5>
+                </div>
+                <div class="card-body">
+                    <div id="resultsMap" style="height: 500px; width: 100%;"></div>
+                    <div class="mt-3">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="legend-item">
+                                    <span class="legend-color" style="background-color: #ff0000;"></span>
+                                    <small>Fireball</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="legend-item">
+                                    <span class="legend-color" style="background-color: #ff6600;"></span>
+                                    <small>Radiation</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="legend-item">
+                                    <span class="legend-color" style="background-color: #ffaa00;"></span>
+                                    <small>Air Blast</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="legend-item">
+                                    <span class="legend-color" style="background-color: #ffff00;"></span>
+                                    <small>Thermal</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Casualty Statistics -->
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">💀 Casualty Estimates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-12">
+                            <div class="stat-box mb-3">
+                                <h3 class="text-danger mb-0">@Model.EstimatedDeaths.ToString("N0")</h3>
+                                <small class="text-muted">Estimated Deaths</small>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="stat-box mb-3">
+                                <h4 class="text-warning mb-0">@Model.EstimatedInjuries.ToString("N0")</h4>
+                                <small class="text-muted">Estimated Injuries</small>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="stat-box">
+                                <h4 class="text-info mb-0">@Model.TotalAffected.ToString("N0")</h4>
+                                <small class="text-muted">Total Affected</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blast Effects -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">💥 Blast Effects</h5>
+                </div>
+                <div class="card-body">
+                    <div class="effect-item">
+                        <strong>Fireball Radius:</strong>
+                        <span class="float-end">@((Model.FireballRadius / 1000).ToString("N2")) km</span>
+                    </div>
+                    <div class="effect-item">
+                        <strong>Radiation Radius:</strong>
+                        <span class="float-end">@((Model.RadiationRadius / 1000).ToString("N2")) km</span>
+                    </div>
+                    <div class="effect-item">
+                        <strong>Air Blast Radius:</strong>
+                        <span class="float-end">@((Model.AirBlastRadius / 1000).ToString("N2")) km</span>
+                    </div>
+                    <div class="effect-item">
+                        <strong>Thermal Radiation:</strong>
+                        <span class="float-end">@((Model.ThermalRadiationRadius / 1000).ToString("N2")) km</span>
+                    </div>
+                    <div class="effect-item border-bottom-0">
+                        <strong>Light Blast Radius:</strong>
+                        <span class="float-end">@((Model.LightBlastRadius / 1000).ToString("N2")) km</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Environmental Effects -->
+            <div class="card">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">🌍 Environmental Effects</h5>
+                </div>
+                <div class="card-body">
+                    <div class="effect-item">
+                        <strong>Fallout Radius:</strong>
+                        <span class="float-end">@((Model.FalloutRadius / 1000).ToString("N2")) km</span>
+                    </div>
+                    <div class="effect-item">
+                        <strong>Radiation Level:</strong>
+                        <span class="float-end">@Model.RadiationLevel</span>
+                    </div>
+                    <div class="effect-item border-bottom-0">
+                        <strong>Firestorm Risk:</strong>
+                        <span class="float-end">
+                            @if (Model.FirestormProbability)
+                            {
+                                <span class="text-danger">High</span>
+                            }
+                            else
+                            {
+                                <span class="text-success">Low</span>
+                            }
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 Detailed Analysis</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Immediate Effects (0-1 hour)</h6>
+                            <ul>
+                                <li>Complete destruction within @((Model.FireballRadius / 1000).ToString("N2")) km radius</li>
+                                <li>Lethal radiation exposure within @((Model.RadiationRadius / 1000).ToString("N2")) km</li>
+                                <li>Severe structural damage from blast wave</li>
+                                <li>Third-degree burns from thermal radiation</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Long-term Effects (weeks to years)</h6>
+                            <ul>
+                                <li>Radioactive fallout contamination: @((Model.FalloutRadius / 1000).ToString("N2")) km radius</li>
+                                <li>Increased cancer rates in affected population</li>
+                                <li>Environmental contamination lasting decades</li>
+                                @if (Model.FirestormProbability)
+                                {
+                                    <li>Massive firestorms destroying additional areas</li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="@Url.Action("Index")" class="btn btn-primary btn-lg me-3">
+                🔄 Run Another Simulation
+            </a>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-secondary btn-lg">
+                🏠 Return Home
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Include Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get model data safely
+    var modelData = {
+        latitude: @Model.Latitude.ToString("F6", System.Globalization.CultureInfo.InvariantCulture),
+        longitude: @Model.Longitude.ToString("F6", System.Globalization.CultureInfo.InvariantCulture),
+        fireballRadius: @Model.FireballRadius.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+        radiationRadius: @Model.RadiationRadius.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+        airBlastRadius: @Model.AirBlastRadius.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+        thermalRadiationRadius: @Model.ThermalRadiationRadius.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+        falloutRadius: @Model.FalloutRadius.ToString("F2", System.Globalization.CultureInfo.InvariantCulture),
+        detonationType: '@Model.DetonationType.ToString()'
+    };
+    
+    console.log('Model data:', modelData); // Debug log
+    
+    // Initialize results map
+    var map = L.map('resultsMap').setView([modelData.latitude, modelData.longitude], 11);
+    
+    // Add tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Ground zero marker
+    var groundZero = L.marker([modelData.latitude, modelData.longitude], {
+        icon: L.divIcon({
+            className: 'ground-zero-marker',
+            html: '💥',
+            iconSize: [30, 30],
+            iconAnchor: [15, 15]
+        })
+    }).addTo(map);
+    
+    // Blast effect circles
+    var fireballCircle = L.circle([modelData.latitude, modelData.longitude], {
+        color: '#ff0000',
+        fillColor: '#ff0000',
+        fillOpacity: 0.8,
+        radius: parseFloat(modelData.fireballRadius)
+    }).addTo(map);
+    
+    var radiationCircle = L.circle([modelData.latitude, modelData.longitude], {
+        color: '#ff6600',
+        fillColor: '#ff6600',
+        fillOpacity: 0.5,
+        radius: parseFloat(modelData.radiationRadius)
+    }).addTo(map);
+    
+    var airBlastCircle = L.circle([modelData.latitude, modelData.longitude], {
+        color: '#ffaa00',
+        fillColor: '#ffaa00',
+        fillOpacity: 0.3,
+        radius: parseFloat(modelData.airBlastRadius)
+    }).addTo(map);
+    
+    var thermalCircle = L.circle([modelData.latitude, modelData.longitude], {
+        color: '#ffff00',
+        fillColor: '#ffff00',
+        fillOpacity: 0.2,
+        radius: parseFloat(modelData.thermalRadiationRadius)
+    }).addTo(map);
+    
+    // Add fallout circle for surface bursts
+    if (modelData.detonationType === 'SurfaceBurst') {
+        var falloutCircle = L.circle([modelData.latitude, modelData.longitude], {
+            color: '#800080',
+            fillColor: '#800080',
+            fillOpacity: 0.1,
+            radius: parseFloat(modelData.falloutRadius),
+            dashArray: '5, 5'
+        }).addTo(map);
+    }
+    
+    // Fit map to show all effects
+    var maxRadius = Math.max(
+        parseFloat(modelData.fireballRadius), 
+        parseFloat(modelData.radiationRadius), 
+        parseFloat(modelData.airBlastRadius), 
+        parseFloat(modelData.thermalRadiationRadius)
+    );
+    
+    // Calculate bounds with proper padding
+    var latOffset = maxRadius / 111000; // Approximate meters to degrees
+    var lngOffset = maxRadius / (111000 * Math.cos(modelData.latitude * Math.PI / 180));
+    
+    var bounds = L.latLngBounds([
+        [modelData.latitude - latOffset, modelData.longitude - lngOffset],
+        [modelData.latitude + latOffset, modelData.longitude + lngOffset]
+    ]);
+    
+    map.fitBounds(bounds, { padding: [20, 20] });
+    
+    // Add popup to ground zero
+    groundZero.bindPopup(`
+        <div>
+            <h6>Ground Zero</h6>
+            <p><strong>Target:</strong> @Model.TargetCity</p>
+            <p><strong>Yield:</strong> @Model.BombYield.ToString("N1") kt</p>
+            <p><strong>Type:</strong> @Model.DetonationType.ToString().Replace("Burst", " Burst")</p>
+        </div>
+    `);
+});
+</script>
+
+<style>
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 5px;
+    }
+    
+    .legend-color {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: 8px;
+        border: 1px solid #333;
+    }
+    
+    .stat-box {
+        padding: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+    
+    .effect-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .ground-zero-marker {
+        font-size: 20px;
+        text-align: center;
+        line-height: 30px;
+    }
+    
+    .card {
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border: none;
+    }
+    
+    .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+    }
+</style>
