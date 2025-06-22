@@ -1,0 +1,151 @@
+name: Nuclear War Simulation CI/CD
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master ]
+
+env:
+  DOTNET_VERSION: '8.0.x'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 🔄 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🛠️ Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: 📦 Restore dependencies
+      run: dotnet restore
+      
+    - name: 🏗️ Build application
+      run: dotnet build --configuration Release --no-restore
+      
+    - name: 🧪 Run tests
+      run: dotnet test --configuration Release --no-build --verbosity normal
+      
+    - name: 📊 Publish test results
+      uses: dorny/test-reporter@v1
+      if: success() || failure()
+      with:
+        name: .NET Tests
+        path: '**/TestResults/*.xml'
+        reporter: dotnet-trx
+
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    steps:
+    - name: 🔄 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🔒 Run security scan
+      uses: security-code-scan/security-code-scan-action@main
+      with:
+        project-path: './NuclearWarSimulation.csproj'
+
+  educational-compliance:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    
+    steps:
+    - name: 🔄 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 📚 Verify educational disclaimers
+      run: |
+        echo "🎓 Checking for educational disclaimers..."
+        if grep -r "educational purposes only" Views/ --include="*.cshtml"; then
+          echo "✅ Educational disclaimers found"
+        else
+          echo "❌ Educational disclaimers missing"
+          exit 1
+        fi
+        
+    - name: 🕊️ Verify peace advocacy content
+      run: |
+        echo "🕊️ Checking for peace advocacy content..."
+        if grep -r "nuclear disarmament\|peace" Views/ README.md --include="*.cshtml" --include="*.md"; then
+          echo "✅ Peace advocacy content found"
+        else
+          echo "❌ Peace advocacy content missing"
+          exit 1
+        fi
+
+  deploy-preview:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan, educational-compliance]
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - name: 🔄 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🛠️ Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: 🏗️ Build for deployment
+      run: dotnet publish --configuration Release --output ./publish
+      
+    - name: 📤 Deploy to preview environment
+      run: |
+        echo "🚀 Deploying to preview environment..."
+        echo "Preview URL: https://nuclear-sim-preview.example.com"
+        # Add actual deployment steps here
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [build-and-test, security-scan, educational-compliance]
+    if: github.ref == 'refs/heads/master' && contains(github.event.head_commit.message, 'release:')
+    
+    steps:
+    - name: 🔄 Checkout code
+      uses: actions/checkout@v4
+      
+    - name: 🛠️ Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+        
+    - name: 🏗️ Build for production
+      run: dotnet publish --configuration Release --output ./publish
+      
+    - name: 🏷️ Create release tag
+      run: |
+        VERSION=$(date +%Y.%m.%d)
+        git tag -a "v$VERSION" -m "Release v$VERSION"
+        git push origin "v$VERSION"
+        
+    - name: 📦 Create GitHub release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.version.outputs.version }}
+        release_name: Nuclear War Simulation v${{ steps.version.outputs.version }}
+        body: |
+          ## 🎓 Educational Release
+          
+          ### ✨ Features
+          - Interactive nuclear blast simulation
+          - Scientific accuracy with educational disclaimers
+          - Peace advocacy and disarmament messaging
+          
+          ### 🔒 License
+          This software is licensed for educational use only.
+          
+          ### ⚠️ Important Notice
+          This simulation is for educational purposes to promote awareness
+          about nuclear weapons consequences and support disarmament efforts.
+        draft: false
+        prerelease: false
